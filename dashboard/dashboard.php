@@ -43,7 +43,11 @@ $memberSince = date('F j, Y', strtotime($user['created_at']));
     <script src="../assets/js/theme.js" defer></script>
 </head>
 <body>
-    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+                <li>
+                <button class="theme-toggle" aria-label="Toggle dark mode">
+                <img src="../../assets/img/dark-mode.png" alt="Dark mode">
+                </button>
+                </li>
 
     <div class="auth-topbar">
         <a href="../index.php" class="logo">Tech Pulse</a>
@@ -53,7 +57,10 @@ $memberSince = date('F j, Y', strtotime($user['created_at']));
         <div class="auth-card">
 
             <div class="auth-header">
-                <h1>Welcome back, <?= htmlspecialchars($user['firstname']) ?> 👋</h1>
+            <h1>
+                Welcome back, <?= htmlspecialchars($user['firstname']) ?>
+                <img src="../assets/img/wave.png" alt="Wave">
+            </h1>
                 <p>Here's your ComLab account overview.</p>
             </div>
 
