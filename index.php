@@ -32,7 +32,11 @@
                 <li><a href="#benefits">Benefits</a></li>
                 <li><a href="#cta">Register</a></li>
                 <li><a href="auth/login/login.php">Login</a></li>
-                <li><button class="theme-toggle" aria-label="Toggle dark mode">🌙</button></li>
+                <li>
+                <button class="theme-toggle" aria-label="Toggle dark mode">
+                <img src="assets/img/dark-mode.png" alt="Dark mode">
+                </button>
+                </li>
             </ul>
             <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">
                 <span class="nav-toggle-bar"></span>
