@@ -368,6 +368,13 @@ button:focus-visible {
     box-shadow: 0 12px 32px rgba(79, 70, 229, 0.15);
 }
 
+.feature-icon img {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    display: block;
+}
+
 .feature-card h3 {
     font-size: 1.75rem;
     font-weight: 700;
@@ -764,4 +771,11 @@ button:focus-visible {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+.benefit-icon img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    display: block;
 }

@@ -76,12 +76,16 @@
         <h2 class="section-title animate-on-scroll">Everything You Need for Modern Laboratory Management</h2>
         <div class="features-grid">
             <div class="feature-card animate-on-scroll">
-                <div class="feature-icon">💻</div>
+            <div class="feature-icon">
+                <img src="assets/img/computer.png" alt="Computer">
+            </div>
                 <h3>Computer Status Monitoring</h3>
                 <p>Monitor the status of laboratory computers in one place. Easily identify which computers are working, available, occupied, or unavailable for better laboratory management.</p>
             </div>
             <div class="feature-card animate-on-scroll">
-                <div class="feature-icon">🔗</div>
+            <div class="feature-icon">
+                <img src="assets/img/tracking.png" alt="Tracking">
+            </div>
                 <h3>Student Session Tracking</h3>
                 <p>Keep accurate records of students using the laboratory, including their assigned computer, course and year, time in, and time out for organized session monitoring.</p>
             </div>
@@ -113,21 +117,27 @@
         <h2 class="section-title animate-on-scroll">Why Choose Tech Pulse?</h2>
         <div class="benefits-container">
             <div class="benefit-item animate-on-scroll">
-                <div class="benefit-icon">⚡</div>
+            <div class="benefit-icon">
+                <img src="assets/img/energy.png" alt="Energy">
+            </div>
                 <div class="benefit-text">
                     <h4>Efficient Laboratory Management</h4>
                     <p>Reduce manual monitoring and make it easier to manage students, computer assignments, and laboratory sessions.</p>
                 </div>
             </div>
             <div class="benefit-item animate-on-scroll">
-                <div class="benefit-icon">📊</div>
+            <div class="benefit-icon">
+                <img src="assets/img/records.png" alt="Records">
+            </div>
                 <div class="benefit-text">
                     <h4>Accurate Laboratory Records</h4>
                     <p>Maintain organized records of student sessions, computer usage, PC status, and time in and time out.</p>
                 </div>
             </div>
             <div class="benefit-item animate-on-scroll">
-                <div class="benefit-icon">👥</div>
+            <div class="benefit-icon">
+                <img src="assets/img/management.png" alt="Management">
+            </div>
                 <div class="benefit-text">
                     <h4>Better Computer Management</h4>
                     <p>Quickly identify available and occupied computers, helping students and laboratory staff manage resources efficiently.</p>
