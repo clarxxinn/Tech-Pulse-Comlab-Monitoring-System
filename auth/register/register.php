@@ -87,7 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="register_auth.js" defer></script>
 </head>
 <body>
-    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+                <li>
+                <button class="theme-toggle" aria-label="Toggle dark mode">
+                <img src="../../assets/img/dark-mode.png" alt="Dark mode">
+                </button>
+                </li>
 
     <div class="auth-topbar">
         <a href="../../index.php" class="logo">Tech Pulse</a>

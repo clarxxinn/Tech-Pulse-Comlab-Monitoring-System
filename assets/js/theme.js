@@ -5,12 +5,14 @@ function applyTheme(theme) {
     document.querySelectorAll('.theme-toggle').forEach(btn => {
         const icon = btn.querySelector('img');
 
+        if (!icon) return;
+
         if (theme === 'dark') {
-            icon.src = 'assets/img/light-mode.png';
+            icon.src = '/Tech%20Pulse%20-%20Comlab%20Monitoring%20System/assets/img/light-mode.png';
             icon.alt = 'Light mode';
             btn.setAttribute('aria-label', 'Switch to light mode');
         } else {
-            icon.src = 'assets/img/dark-mode.png';
+            icon.src = '/Tech%20Pulse%20-%20Comlab%20Monitoring%20System/assets/img/dark-mode.png';
             icon.alt = 'Dark mode';
             btn.setAttribute('aria-label', 'Switch to dark mode');
         }
