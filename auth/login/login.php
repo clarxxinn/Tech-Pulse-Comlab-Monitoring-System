@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
 
     <div class="auth-topbar">
-        <a href="../index.php" class="logo">Tech Pulse</a>
+        <a href="../../index.php" class="logo">Tech Pulse</a>
     </div>
 
     <div class="auth-wrapper">
