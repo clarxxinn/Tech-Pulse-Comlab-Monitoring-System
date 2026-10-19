@@ -58,7 +58,7 @@ button:focus-visible {
     border-radius: 4px;
 }
 
-/* ---- Top bar ---- */
+/* Top bar */
 .auth-topbar {
     padding: 1.5rem 2rem;
     display: flex;
@@ -87,7 +87,7 @@ button:focus-visible {
     border-radius: 50px;
 }
 
-/* ---- Theme toggle (fixed, matches the other pages) ---- */
+/* Theme toggle (fixed, matches the other pages) */
 .theme-toggle {
     position: fixed;
     top: 1.25rem;
@@ -109,13 +109,20 @@ button:focus-visible {
     transition: all 0.3s ease;
 }
 
+.theme-toggle img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    display: block;
+}
+
 .theme-toggle:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px var(--shadowMedium);
     border-color: var(--accentPrimary);
 }
 
-/* ---- Dashboard shell ---- */
+/* Dashboard shell */
 .admin-shell {
     flex: 1;
     width: 100%;
@@ -165,7 +172,7 @@ button:focus-visible {
     box-shadow: 0 8px 24px var(--shadowLight);
 }
 
-/* ---- Stat cards ---- */
+/* Stat cards */
 .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -200,7 +207,7 @@ button:focus-visible {
     color: var(--textSecondary);
 }
 
-/* ---- Panels (cards) ---- */
+/* Panels (cards) */
 .panel {
     background: var(--bgCard);
     border: 1px solid var(--borderColor);
@@ -231,7 +238,7 @@ button:focus-visible {
     padding: 0.1rem 0.6rem;
 }
 
-/* ---- Forms ---- */
+/* Forms */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -340,7 +347,7 @@ button[type="submit"]:hover,
     transform: none;
 }
 
-/* ---- Alerts ---- */
+/* Alerts */
 .alert {
     padding: 0.9rem 1.1rem;
     border-radius: 12px;
@@ -365,7 +372,7 @@ button[type="submit"]:hover,
     border-color: rgba(16, 185, 129, 0.25);
 }
 
-/* ---- Accounts table ---- */
+/* Accounts table */
 .table-wrap {
     overflow-x: auto;
     border-radius: 14px;
@@ -462,7 +469,7 @@ button[type="submit"]:hover,
     transform: translateY(-1px);
 }
 
-/* ---- Centered card layout (edit page) ---- */
+/* Centered card layout (edit page) */
 .auth-wrapper {
     flex: 1;
     display: flex;
@@ -499,6 +506,10 @@ button[type="submit"]:hover,
     font-size: 0.95rem;
 }
 
+.back-link {
+    text-align: center;
+}
+
 .back-home {
     display: inline-block;
     margin-top: 1.5rem;
@@ -512,7 +523,7 @@ button[type="submit"]:hover,
     color: var(--accentPrimary);
 }
 
-/* ---- Motion / responsive ---- */
+/* Motion / responsive */
 @media (prefers-reduced-motion: reduce) {
     * {
         transition-duration: 0.01ms !important;

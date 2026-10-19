@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
+
 session_start();
+
 require_once __DIR__ . '/../config/techpulse.php';
 require_once __DIR__ . '/../config/options.php';
 require_once __DIR__ . '/admindashboarddb.php';
@@ -16,17 +18,23 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 $errors = [];
-$old = ['studentid' => '', 'firstname' => '', 'lastname' => '', 'course' => '', 'yearlevel' => ''];
+$formValues = [
+    'studentid' => '',
+    'firstname' => '',
+    'lastname' => '',
+    'course' => '',
+    'yearlevel' => '',
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    $csrfOk = hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'] ?? '');
+    $validCsrfToken = hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'] ?? '');
 
-    if (!$csrfOk) {
+    if (!$validCsrfToken) {
         $errors[] = 'Your session expired. Please refresh the page and try again.';
     }
 
-    if ($csrfOk && $action === 'delete') {
+    if ($validCsrfToken && $action === 'delete') {
         $studentId = trim($_POST['studentid'] ?? '');
 
         if ($studentId !== '' && ctype_digit($studentId)) {
@@ -42,40 +50,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    if ($csrfOk && $action === 'create') {
-        $firstname = trim($_POST['firstname'] ?? '');
-        $lastname  = trim($_POST['lastname'] ?? '');
-        $studentid = trim($_POST['studentid'] ?? '');
-        $course    = trim($_POST['course'] ?? '');
-        $yearlevel = trim($_POST['yearlevel'] ?? '');
-        $password  = $_POST['password'] ?? '';
+    if ($validCsrfToken && $action === 'create') {
+        $firstName = trim($_POST['firstname'] ?? '');
+        $lastName = trim($_POST['lastname'] ?? '');
+        $studentId = trim($_POST['studentid'] ?? '');
+        $course = trim($_POST['course'] ?? '');
+        $yearLevel = trim($_POST['yearlevel'] ?? '');
+        $password = $_POST['password'] ?? '';
 
-        $old = compact('firstname', 'lastname', 'studentid', 'course', 'yearlevel');
+        $formValues = [
+            'firstname' => $firstName,
+            'lastname' => $lastName,
+            'studentid' => $studentId,
+            'course' => $course,
+            'yearlevel' => $yearLevel,
+        ];
 
-        if ($firstname === '' || mb_strlen($firstname) > 67) {
+        if ($firstName === '' || mb_strlen($firstName) > 67) {
             $errors[] = 'Please enter a valid first name.';
         }
-        if ($lastname === '' || mb_strlen($lastname) > 67) {
+
+        if ($lastName === '' || mb_strlen($lastName) > 67) {
             $errors[] = 'Please enter a valid last name.';
         }
-        if ($studentid === '' || !ctype_digit($studentid)) {
+
+        if ($studentId === '' || !ctype_digit($studentId)) {
             $errors[] = 'Please enter a valid Student ID (numbers only).';
         }
+
         if (!array_key_exists($course, $allowedCourses)) {
             $errors[] = 'Please select a valid course.';
         }
-        if (!in_array($yearlevel, $allowedYearLevels, true)) {
+
+        if (!in_array($yearLevel, $allowedYearLevels, true)) {
             $errors[] = 'Please select a valid year level.';
         }
+
         if (strlen($password) < 8) {
             $errors[] = 'Password must be at least 8 characters long.';
         }
 
         if (empty($errors)) {
-            $result = registerUser($conn, $studentid, $firstname, $lastname, $course, $yearlevel, $password);
+            $result = registerUser($conn, $studentId, $firstName, $lastName, $course, $yearLevel, $password);
 
             if ($result['success']) {
-                $_SESSION['admin_flash'] = ['type' => 'success', 'message' => "Account {$studentid} has been created."];
+                $_SESSION['admin_flash'] = ['type' => 'success', 'message' => "Account {$studentId} has been created."];
                 header('Location: admindashboard.php');
                 exit;
             }
@@ -98,10 +117,7 @@ $csrfToken = $_SESSION['csrf_token'];
 <head>
     <meta charset="UTF-8">
     <script>
-        (function () {
-            var theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Tech Pulse</title>
@@ -110,17 +126,19 @@ $csrfToken = $_SESSION['csrf_token'];
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admindashboard.css">
     <script src="../assets/js/theme.js" defer></script>
+    <script src="../assets/js/password-toggle.js" defer></script>
     <script src="admin.js" defer></script>
 </head>
 <body>
-    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+    <button type="button" class="theme-toggle" aria-label="Toggle dark mode">
+        <img src="../assets/img/dark-mode.png" alt="Dark mode">
+    </button>
 
     <div class="auth-topbar">
         <a href="../index.php" class="logo">Tech Pulse <span class="admin-badge">Admin</span></a>
     </div>
 
     <div class="admin-shell">
-
         <header class="admin-head">
             <div>
                 <h1>Admin Dashboard</h1>
@@ -171,28 +189,28 @@ $csrfToken = $_SESSION['csrf_token'];
                     <div class="form-group">
                         <label for="firstname">First Name</label>
                         <input type="text" id="firstname" name="firstname" maxlength="67"
-                               value="<?= htmlspecialchars($old['firstname']) ?>" required>
+                            value="<?= htmlspecialchars($formValues['firstname']) ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="lastname">Last Name</label>
                         <input type="text" id="lastname" name="lastname" maxlength="67"
-                               value="<?= htmlspecialchars($old['lastname']) ?>" required>
+                            value="<?= htmlspecialchars($formValues['lastname']) ?>" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="studentid">Student ID</label>
                     <input type="number" id="studentid" name="studentid" inputmode="numeric" placeholder="25010992"
-                           value="<?= htmlspecialchars($old['studentid']) ?>" required>
+                        value="<?= htmlspecialchars($formValues['studentid']) ?>" required>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="course">Course</label>
                         <select id="course" name="course" required>
-                            <option value="" disabled <?= $old['course'] === '' ? 'selected' : '' ?>>-- Select Course --</option>
+                            <option value="" disabled <?= $formValues['course'] === '' ? 'selected' : '' ?>>-- Select Course --</option>
                             <?php foreach ($allowedCourses as $code => $label): ?>
-                                <option value="<?= htmlspecialchars($code) ?>" <?= $old['course'] === $code ? 'selected' : '' ?>>
+                                <option value="<?= htmlspecialchars($code) ?>" <?= $formValues['course'] === $code ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($label) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -201,10 +219,10 @@ $csrfToken = $_SESSION['csrf_token'];
                     <div class="form-group">
                         <label for="yearlevel">Year Level</label>
                         <select id="yearlevel" name="yearlevel" required>
-                            <option value="" disabled <?= $old['yearlevel'] === '' ? 'selected' : '' ?>>-- Select Year Level --</option>
-                            <?php foreach ($allowedYearLevels as $yl): ?>
-                                <option value="<?= htmlspecialchars($yl) ?>" <?= $old['yearlevel'] === $yl ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($yl) ?>
+                            <option value="" disabled <?= $formValues['yearlevel'] === '' ? 'selected' : '' ?>>-- Select Year Level --</option>
+                            <?php foreach ($allowedYearLevels as $yearLevelOption): ?>
+                                <option value="<?= htmlspecialchars($yearLevelOption) ?>" <?= $formValues['yearlevel'] === $yearLevelOption ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($yearLevelOption) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -245,21 +263,21 @@ $csrfToken = $_SESSION['csrf_token'];
                                 <td colspan="6" class="empty-row">No accounts yet.</td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($users as $u): ?>
+                            <?php foreach ($users as $user): ?>
                                 <tr>
-                                    <td data-label="Student ID"><?= htmlspecialchars((string) $u['StudentID']) ?></td>
-                                    <td data-label="Name"><?= htmlspecialchars($u['firstname'] . ' ' . $u['lastname']) ?></td>
-                                    <td data-label="Course"><?= htmlspecialchars($u['course']) ?></td>
-                                    <td data-label="Year Level"><?= htmlspecialchars($u['yearlevel']) ?></td>
-                                    <td data-label="Created"><?= htmlspecialchars(date('M j, Y', strtotime($u['created_at']))) ?></td>
+                                    <td data-label="Student ID"><?= htmlspecialchars((string) $user['StudentID']) ?></td>
+                                    <td data-label="Name"><?= htmlspecialchars($user['firstname'] . ' ' . $user['lastname']) ?></td>
+                                    <td data-label="Course"><?= htmlspecialchars($user['course']) ?></td>
+                                    <td data-label="Year Level"><?= htmlspecialchars($user['yearlevel']) ?></td>
+                                    <td data-label="Created"><?= htmlspecialchars(date('M j, Y', strtotime($user['created_at']))) ?></td>
                                     <td data-label="Actions" class="col-actions">
                                         <div class="actions">
-                                            <a class="btn-sm btn-edit" href="editaccount.php?id=<?= (int) $u['StudentID'] ?>">Edit</a>
+                                            <a class="btn-sm btn-edit" href="editaccount.php?id=<?= (int) $user['StudentID'] ?>">Edit</a>
                                             <form method="POST" action="admindashboard.php" class="inline-form"
-                                                  data-confirm="Delete account <?= htmlspecialchars((string) $u['StudentID']) ?>? This cannot be undone.">
+                                                data-confirm="Delete account <?= htmlspecialchars((string) $user['StudentID']) ?>? This cannot be undone.">
                                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                                                 <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="studentid" value="<?= htmlspecialchars((string) $u['StudentID']) ?>">
+                                                <input type="hidden" name="studentid" value="<?= htmlspecialchars((string) $user['StudentID']) ?>">
                                                 <button type="submit" class="btn-sm btn-delete">Delete</button>
                                             </form>
                                         </div>
@@ -273,6 +291,5 @@ $csrfToken = $_SESSION['csrf_token'];
         </section>
 
     </div>
-
 </body>
 </html>

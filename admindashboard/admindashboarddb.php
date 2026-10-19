@@ -2,66 +2,51 @@
 declare(strict_types=1);
 
 /**
- * Data-access helpers for the admin dashboard. Pure functions over the shared
- * mysqli $conn using prepared statements — mirrors auth/login/logindb.php and
- * dashboard/dashboarddb.php.
- *
- * Account creation reuses registerUser() (auth/register/registerdb.php) and
- * single-profile reads reuse findUserProfile() (dashboard/dashboarddb.php), so
- * this file only holds the admin-only list / update / delete operations.
- */
-
-/**
  * Every account, newest first — the account-creation history.
  *
  * @return list<array{StudentID: int, firstname: string, lastname: string, course: string, yearlevel: string, created_at: string}>
  */
 function getAllUsers(mysqli $conn): array
 {
-    $result = mysqli_query(
-        $conn,
+    $result = $conn->query(
         'SELECT StudentID, firstname, lastname, course, yearlevel, created_at
          FROM users
          ORDER BY created_at DESC, StudentID DESC'
     );
 
-    return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 }
 
 /**
- * Updates an account's profile fields. The password is only rewritten when
- * $newPassword is a non-empty string (blank/null = keep the current password).
- * StudentID is the primary key / login identifier and is never changed here.
+ * A blank password keeps the current hash; StudentID stays unchanged.
  *
  * @return array{success: bool, error: ?string}
  */
 function adminUpdateUser(
     mysqli $conn,
     string $studentId,
-    string $firstname,
-    string $lastname,
+    string $firstName,
+    string $lastName,
     string $course,
-    string $yearlevel,
-    ?string $newPassword = null
+    string $yearLevel,
+    string $newPassword = ''
 ): array {
     try {
-        if ($newPassword !== null && $newPassword !== '') {
+        if ($newPassword !== '') {
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = mysqli_prepare(
-                $conn,
+            $stmt = $conn->prepare(
                 'UPDATE users SET firstname = ?, lastname = ?, course = ?, yearlevel = ?, password = ? WHERE StudentID = ?'
             );
-            mysqli_stmt_bind_param($stmt, 'sssssi', $firstname, $lastname, $course, $yearlevel, $hashedPassword, $studentId);
+            $stmt->bind_param('sssssi', $firstName, $lastName, $course, $yearLevel, $hashedPassword, $studentId);
         } else {
-            $stmt = mysqli_prepare(
-                $conn,
+            $stmt = $conn->prepare(
                 'UPDATE users SET firstname = ?, lastname = ?, course = ?, yearlevel = ? WHERE StudentID = ?'
             );
-            mysqli_stmt_bind_param($stmt, 'ssssi', $firstname, $lastname, $course, $yearlevel, $studentId);
+            $stmt->bind_param('ssssi', $firstName, $lastName, $course, $yearLevel, $studentId);
         }
 
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $stmt->execute();
+        $stmt->close();
 
         return ['success' => true, 'error' => null];
     } catch (mysqli_sql_exception $e) {
@@ -72,11 +57,11 @@ function adminUpdateUser(
 function deleteUser(mysqli $conn, string $studentId): bool
 {
     try {
-        $stmt = mysqli_prepare($conn, 'DELETE FROM users WHERE StudentID = ?');
-        mysqli_stmt_bind_param($stmt, 'i', $studentId);
-        mysqli_stmt_execute($stmt);
-        $affected = mysqli_stmt_affected_rows($stmt);
-        mysqli_stmt_close($stmt);
+        $stmt = $conn->prepare('DELETE FROM users WHERE StudentID = ?');
+        $stmt->bind_param('i', $studentId);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
 
         return $affected > 0;
     } catch (mysqli_sql_exception $e) {

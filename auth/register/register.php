@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
+
 session_start();
+
 require_once __DIR__ . '/../../config/techpulse.php';
 require_once __DIR__ . '/registerdb.php';
 require_once __DIR__ . '/../../config/options.php';
@@ -15,47 +17,65 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 $errors = [];
-$old = ['firstname' => '', 'lastname' => '', 'studentid' => '', 'course' => '', 'yearlevel' => ''];
+$formValues = [
+    'firstname' => '',
+    'lastname' => '',
+    'studentid' => '',
+    'course' => '',
+    'yearlevel' => '',
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'] ?? '')) {
         $errors[] = 'Your session expired. Please refresh the page and try again.';
     }
 
-    $firstname = trim($_POST['firstname'] ?? '');
-    $lastname  = trim($_POST['lastname'] ?? '');
-    $studentid = trim($_POST['studentid'] ?? '');
-    $course    = trim($_POST['course'] ?? '');
-    $yearlevel = trim($_POST['yearlevel'] ?? '');
-    $password  = $_POST['password'] ?? '';
+    $firstName = trim($_POST['firstname'] ?? '');
+    $lastName = trim($_POST['lastname'] ?? '');
+    $studentId = trim($_POST['studentid'] ?? '');
+    $course = trim($_POST['course'] ?? '');
+    $yearLevel = trim($_POST['yearlevel'] ?? '');
+    $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
 
-    $old = compact('firstname', 'lastname', 'studentid', 'course', 'yearlevel');
+    $formValues = [
+        'firstname' => $firstName,
+        'lastname' => $lastName,
+        'studentid' => $studentId,
+        'course' => $course,
+        'yearlevel' => $yearLevel,
+    ];
 
-    if ($firstname === '' || mb_strlen($firstname) > 67) {
+    if ($firstName === '' || mb_strlen($firstName) > 67) {
         $errors[] = 'Please enter a valid first name.';
     }
-    if ($lastname === '' || mb_strlen($lastname) > 67) {
+
+    if ($lastName === '' || mb_strlen($lastName) > 67) {
         $errors[] = 'Please enter a valid last name.';
     }
-    if ($studentid === '' || !ctype_digit($studentid)) {
+
+    if ($studentId === '' || !ctype_digit($studentId)) {
         $errors[] = 'Please enter a valid Student ID (numbers only).';
     }
+
     if (!array_key_exists($course, $allowedCourses)) {
         $errors[] = 'Please select a valid course.';
     }
-    if (!in_array($yearlevel, $allowedYearLevels, true)) {
+
+    if (!in_array($yearLevel, $allowedYearLevels, true)) {
         $errors[] = 'Please select a valid year level.';
     }
+
     if (strlen($password) < 8) {
         $errors[] = 'Password must be at least 8 characters long.';
     }
+
     if ($password !== $confirmPassword) {
         $errors[] = 'Passwords do not match.';
     }
 
     if (empty($errors)) {
-        $result = registerUser($conn, $studentid, $firstname, $lastname, $course, $yearlevel, $password);
+        $result = registerUser($conn, $studentId, $firstName, $lastName, $course, $yearLevel, $password);
 
         if ($result['success']) {
             unset($_SESSION['csrf_token']);
@@ -72,26 +92,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <script>
-        (function () {
-            var theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Tech Pulse</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/auth.css">
     <link rel="stylesheet" href="register.css">
     <script src="../../assets/js/theme.js" defer></script>
+    <script src="../../assets/js/password-toggle.js" defer></script>
     <script src="register_auth.js" defer></script>
 </head>
 <body>
-                <li>
-                <button class="theme-toggle" aria-label="Toggle dark mode">
-                <img src="../../assets/img/dark-mode.png" alt="Dark mode">
-                </button>
-                </li>
+    <button type="button" class="theme-toggle" aria-label="Toggle dark mode">
+        <img src="../../assets/img/dark-mode.png" alt="Dark mode">
+    </button>
 
     <div class="auth-topbar">
         <a href="../../index.php" class="logo">Tech Pulse</a>
@@ -99,7 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="auth-wrapper">
         <div class="auth-card wide">
-
             <div class="auth-header">
                 <h1>Create your account</h1>
                 <p>Register to start using the ComLab monitoring system.</p>
@@ -123,28 +139,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-group">
                         <label for="firstname">First Name</label>
                         <input type="text" id="firstname" name="firstname" maxlength="67" placeholder="Robert James"
-                               value="<?= htmlspecialchars($old['firstname']) ?>" required>
+                            value="<?= htmlspecialchars($formValues['firstname']) ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="lastname">Last Name</label>
                         <input type="text" id="lastname" name="lastname" maxlength="67" placeholder="Fischer"
-                               value="<?= htmlspecialchars($old['lastname']) ?>" required>
+                            value="<?= htmlspecialchars($formValues['lastname']) ?>" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="studentid">Student ID</label>
                     <input type="number" id="studentid" name="studentid" inputmode="numeric"
-                           placeholder="25010992"
-                           value="<?= htmlspecialchars($old['studentid']) ?>" required>
+                        placeholder="25010992"
+                        value="<?= htmlspecialchars($formValues['studentid']) ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="course">Course</label>
                     <select id="course" name="course" required>
-                        <option value="" disabled <?= $old['course'] === '' ? 'selected' : '' ?>>-- Select Course --</option>
+                        <option value="" disabled <?= $formValues['course'] === '' ? 'selected' : '' ?>>-- Select Course --</option>
                         <?php foreach ($allowedCourses as $code => $label): ?>
-                            <option value="<?= $code ?>" <?= $old['course'] === $code ? 'selected' : '' ?>><?= $label ?></option>
+                            <option value="<?= htmlspecialchars($code) ?>" <?= $formValues['course'] === $code ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -152,9 +170,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-group">
                     <label for="yearlevel">Year Level</label>
                     <select id="yearlevel" name="yearlevel" required>
-                        <option value="" disabled <?= $old['yearlevel'] === '' ? 'selected' : '' ?>>-- Select Year Level --</option>
-                        <?php foreach ($allowedYearLevels as $yl): ?>
-                            <option value="<?= $yl ?>" <?= $old['yearlevel'] === $yl ? 'selected' : '' ?>><?= $yl ?></option>
+                        <option value="" disabled <?= $formValues['yearlevel'] === '' ? 'selected' : '' ?>>-- Select Year Level --</option>
+                        <?php foreach ($allowedYearLevels as $yearLevelOption): ?>
+                            <option value="<?= htmlspecialchars($yearLevelOption) ?>" <?= $formValues['yearlevel'] === $yearLevelOption ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($yearLevelOption) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -182,11 +202,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <p class="auth-switch">Already have an account? <a href="../login/login.php">Log in</a></p>
 
-            <div style="text-align:center;">
+            <div class="back-link">
                 <a href="../../index.php" class="back-home">&larr; Back to home</a>
             </div>
         </div>
     </div>
-
 </body>
 </html>

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
+
 session_start();
+
 require_once __DIR__ . '/../config/techpulse.php';
 require_once __DIR__ . '/../config/options.php';
 require_once __DIR__ . '/admindashboarddb.php';
@@ -32,10 +34,10 @@ if ($user === null) {
 }
 
 $errors = [];
-$old = [
+$formValues = [
     'firstname' => $user['firstname'],
-    'lastname'  => $user['lastname'],
-    'course'    => $user['course'],
+    'lastname' => $user['lastname'],
+    'course' => $user['course'],
     'yearlevel' => $user['yearlevel'],
 ];
 
@@ -44,26 +46,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Your session expired. Please refresh the page and try again.';
     }
 
-    $firstname   = trim($_POST['firstname'] ?? '');
-    $lastname    = trim($_POST['lastname'] ?? '');
-    $course      = trim($_POST['course'] ?? '');
-    $yearlevel   = trim($_POST['yearlevel'] ?? '');
+    $firstName = trim($_POST['firstname'] ?? '');
+    $lastName = trim($_POST['lastname'] ?? '');
+    $course = trim($_POST['course'] ?? '');
+    $yearLevel = trim($_POST['yearlevel'] ?? '');
     $newPassword = $_POST['new_password'] ?? '';
 
-    $old = compact('firstname', 'lastname', 'course', 'yearlevel');
+    $formValues = [
+        'firstname' => $firstName,
+        'lastname' => $lastName,
+        'course' => $course,
+        'yearlevel' => $yearLevel,
+    ];
 
-    if ($firstname === '' || mb_strlen($firstname) > 67) {
+    if ($firstName === '' || mb_strlen($firstName) > 67) {
         $errors[] = 'Please enter a valid first name.';
     }
-    if ($lastname === '' || mb_strlen($lastname) > 67) {
+
+    if ($lastName === '' || mb_strlen($lastName) > 67) {
         $errors[] = 'Please enter a valid last name.';
     }
+
     if (!array_key_exists($course, $allowedCourses)) {
         $errors[] = 'Please select a valid course.';
     }
-    if (!in_array($yearlevel, $allowedYearLevels, true)) {
+
+    if (!in_array($yearLevel, $allowedYearLevels, true)) {
         $errors[] = 'Please select a valid year level.';
     }
+
     if ($newPassword !== '' && strlen($newPassword) < 8) {
         $errors[] = 'New password must be at least 8 characters long (or leave it blank to keep the current one).';
     }
@@ -72,11 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = adminUpdateUser(
             $conn,
             $studentId,
-            $firstname,
-            $lastname,
+            $firstName,
+            $lastName,
             $course,
-            $yearlevel,
-            $newPassword !== '' ? $newPassword : null
+            $yearLevel,
+            $newPassword
         );
 
         if ($result['success']) {
@@ -97,10 +108,7 @@ $csrfToken = $_SESSION['csrf_token'];
 <head>
     <meta charset="UTF-8">
     <script>
-        (function () {
-            var theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Account - Tech Pulse</title>
@@ -109,10 +117,13 @@ $csrfToken = $_SESSION['csrf_token'];
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admindashboard.css">
     <script src="../assets/js/theme.js" defer></script>
+    <script src="../assets/js/password-toggle.js" defer></script>
     <script src="admin.js" defer></script>
 </head>
 <body>
-    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+    <button type="button" class="theme-toggle" aria-label="Toggle dark mode">
+        <img src="../assets/img/dark-mode.png" alt="Dark mode">
+    </button>
 
     <div class="auth-topbar">
         <a href="../index.php" class="logo">Tech Pulse <span class="admin-badge">Admin</span></a>
@@ -120,7 +131,6 @@ $csrfToken = $_SESSION['csrf_token'];
 
     <div class="auth-wrapper">
         <div class="auth-card">
-
             <div class="auth-header">
                 <h1>Edit account</h1>
                 <p>Member since <?= htmlspecialchars($memberSince) ?>.</p>
@@ -151,42 +161,42 @@ $csrfToken = $_SESSION['csrf_token'];
                     <div class="form-group">
                         <label for="firstname">First Name</label>
                         <input type="text" id="firstname" name="firstname" maxlength="67"
-                               value="<?= htmlspecialchars($old['firstname']) ?>" required>
+                            value="<?= htmlspecialchars($formValues['firstname']) ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="lastname">Last Name</label>
                         <input type="text" id="lastname" name="lastname" maxlength="67"
-                               value="<?= htmlspecialchars($old['lastname']) ?>" required>
+                            value="<?= htmlspecialchars($formValues['lastname']) ?>" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="course">Course</label>
                     <select id="course" name="course" required>
-                        <option value="" disabled <?= $old['course'] === '' ? 'selected' : '' ?>>-- Select Course --</option>
+                        <option value="" disabled <?= $formValues['course'] === '' ? 'selected' : '' ?>>-- Select Course --</option>
                         <?php foreach ($allowedCourses as $code => $label): ?>
-                            <option value="<?= htmlspecialchars($code) ?>" <?= $old['course'] === $code ? 'selected' : '' ?>>
+                            <option value="<?= htmlspecialchars($code) ?>" <?= $formValues['course'] === $code ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($label) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if ($old['course'] !== '' && !array_key_exists($old['course'], $allowedCourses)): ?>
-                        <p class="field-hint">Stored value "<?= htmlspecialchars($old['course']) ?>" isn't in the current list — pick a valid course to save.</p>
+                    <?php if ($formValues['course'] !== '' && !array_key_exists($formValues['course'], $allowedCourses)): ?>
+                        <p class="field-hint">Stored value "<?= htmlspecialchars($formValues['course']) ?>" isn't in the current list — pick a valid course to save.</p>
                     <?php endif; ?>
                 </div>
 
                 <div class="form-group">
                     <label for="yearlevel">Year Level</label>
                     <select id="yearlevel" name="yearlevel" required>
-                        <option value="" disabled <?= $old['yearlevel'] === '' ? 'selected' : '' ?>>-- Select Year Level --</option>
-                        <?php foreach ($allowedYearLevels as $yl): ?>
-                            <option value="<?= htmlspecialchars($yl) ?>" <?= $old['yearlevel'] === $yl ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($yl) ?>
+                        <option value="" disabled <?= $formValues['yearlevel'] === '' ? 'selected' : '' ?>>-- Select Year Level --</option>
+                        <?php foreach ($allowedYearLevels as $yearLevelOption): ?>
+                            <option value="<?= htmlspecialchars($yearLevelOption) ?>" <?= $formValues['yearlevel'] === $yearLevelOption ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($yearLevelOption) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if ($old['yearlevel'] !== '' && !in_array($old['yearlevel'], $allowedYearLevels, true)): ?>
-                        <p class="field-hint">Stored value "<?= htmlspecialchars($old['yearlevel']) ?>" isn't in the current list — pick a valid year level to save.</p>
+                    <?php if ($formValues['yearlevel'] !== '' && !in_array($formValues['yearlevel'], $allowedYearLevels, true)): ?>
+                        <p class="field-hint">Stored value "<?= htmlspecialchars($formValues['yearlevel']) ?>" isn't in the current list — pick a valid year level to save.</p>
                     <?php endif; ?>
                 </div>
 
@@ -202,11 +212,10 @@ $csrfToken = $_SESSION['csrf_token'];
                 <button type="submit" class="submit-btn">Save changes</button>
             </form>
 
-            <div style="text-align:center;">
+            <div class="back-link">
                 <a href="admindashboard.php" class="back-home">&larr; Back to dashboard</a>
             </div>
         </div>
     </div>
-
 </body>
 </html>
