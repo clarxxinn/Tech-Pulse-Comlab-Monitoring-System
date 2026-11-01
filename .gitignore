@@ -1,3 +1,5 @@
 /config/local.php
 *.log
 /database/*backup*.sql
+
+/.vscode/
