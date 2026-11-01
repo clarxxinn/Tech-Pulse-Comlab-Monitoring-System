@@ -46,7 +46,7 @@ Tech Pulse - Comlab Monitoring System/
 2. Start **Apache** and **MySQL** in XAMPP.
 3. Open [phpMyAdmin](http://localhost/phpmyadmin/) and create an empty database named `techpulse`.
 4. Select the database and import [database/techpulse.sql](database/techpulse.sql).
-5. Copy `config/local.example.php` to `config/local.php`. Enter your database credentials and administrator username/password hash. Keep the existing local.php if this installation is already working.
+5. Check `config/techpulse.php`: the local XAMPP connection uses `localhost`, username `root`, an empty password, and database `techpulse`. The administrator username and password hash are configured in the same file.
 6. Open [Tech Pulse](http://localhost/Tech%20Pulse%20-%20Comlab%20Monitoring%20System/).
 
 Generate a hash for your chosen administrator password using PowerShell:
@@ -55,7 +55,7 @@ Generate a hash for your chosen administrator password using PowerShell:
 & C:\xampp\php\php.exe -r "echo password_hash('YOUR_ADMIN_PASSWORD', PASSWORD_DEFAULT), PHP_EOL;"
 ```
 
-Paste the result into `ADMIN_PASSWORD_HASH` in `config/local.php`. That file is ignored by Git. Use a database account with SELECT, INSERT, UPDATE, and DELETE permissions for the application.
+Paste the result into `ADMIN_PASSWORD_HASH` in `config/techpulse.php`. This connection setup is intended for the local XAMPP school demonstration.
 
 The SQL installer includes this demo student:
 
