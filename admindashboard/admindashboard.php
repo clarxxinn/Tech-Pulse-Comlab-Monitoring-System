@@ -553,7 +553,7 @@ foreach ($activeSessions as $session) {
 
             <div class="admin-lab-options">
 
-                <?php for ($lab = 1; $lab <= 3; $lab++): ?>
+                <?php for ($lab = 1; $lab <= 4; $lab++): ?>
 
                     <button
                         type="button"
@@ -580,7 +580,7 @@ foreach ($activeSessions as $session) {
             <!-- Selected Laboratory -->
             <div id="admin-lab-display" hidden>
 
-                <?php for ($lab = 1; $lab <= 3; $lab++): ?>
+                <?php for ($lab = 1; $lab <= 4; $lab++): ?>
 
                     <section
                         id="admin-lab-panel-<?= $lab ?>"

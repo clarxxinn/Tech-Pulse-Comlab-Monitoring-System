@@ -205,7 +205,7 @@ $memberSince = date(
             <section class="monitor-section">
 
                 <h2>
-                    Computer Availability — 3 Labs / 135 PCs
+                    Computer Availability — 4 Labs / 180 PCs
                 </h2>
 
                 <?php if ($monitoringError): ?>
@@ -261,7 +261,7 @@ $memberSince = date(
 
                     <div class="lab-options">
 
-                        <?php for ($lab = 1; $lab <= 3; $lab++): ?>
+                        <?php for ($lab = 1; $lab <= 4; $lab++): ?>
 
                             <button
                                 type="button"
@@ -294,7 +294,7 @@ $memberSince = date(
                 <!-- Selected Laboratory -->
                 <div id="lab-display" hidden>
 
-                    <?php for ($lab = 1; $lab <= 3; $lab++): ?>
+                    <?php for ($lab = 1; $lab <= 4; $lab++): ?>
 
                         <section
                             class="lab-panel"

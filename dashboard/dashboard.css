@@ -366,7 +366,7 @@ h1 {
 .lab-options {
     display: grid;
     grid-template-columns:
-        repeat(3, minmax(0, 1fr));
+        repeat(auto-fit, minmax(110px, 1fr));
     gap: 10px;
 }
 

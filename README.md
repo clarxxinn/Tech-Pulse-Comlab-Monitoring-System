@@ -6,7 +6,7 @@ A modern, web-based computer laboratory monitoring system built with PHP, MySQL,
 
 Tech Pulse is a web-based system designed to simplify computer laboratory monitoring and student computer usage management. It replaces manual usage records with a database-driven system that tracks computer availability, active sessions, and student activity.
 
-The system manages 3 computer laboratories with 45 PCs each (135 computers total) and provides separate dashboards for students and administrators.
+The system manages 4 computer laboratories with 45 PCs each (180 computers total) and provides separate dashboards for students and administrators.
 
 🖥️ Computer monitoring displays available, occupied, and maintenance computers across all laboratories.
 
@@ -18,7 +18,7 @@ The system manages 3 computer laboratories with 45 PCs each (135 computers total
 
 Student Dashboard
 
-🏫 Laboratory selection: switch between ComLab 1, 2, and 3, each containing 45 computers.
+🏫 Laboratory selection: switch between ComLab 1, 2, 3, and 4, each containing 45 computers.
 
 🖥️ Computer availability: view available, occupied, and maintenance PCs through color-coded indicators.
 
@@ -32,7 +32,7 @@ Administrator Dashboard
 
 📊 Monitoring statistics: view total, available, occupied, and maintenance computer counts.
 
-🖥️ Laboratory monitoring: monitor all 135 computers across three laboratories.
+🖥️ Laboratory monitoring: monitor all 180 computers across four laboratories.
 
 🛠️ Maintenance controls: mark computers as under maintenance or restore their availability.
 
@@ -157,3 +157,7 @@ Submit a pull request with a description of your changes.
 📄 License
 
 This project is developed for educational purposes. No open-source license has been specified.
+
+ComLab 4 database update
+
+For an existing monitoring database, run database/add_comlab4.sql in phpMyAdmin with techpulse selected. It adds ComLab 4 and PCs 1-45 without changing existing computers or usage history. Re-running it does not duplicate the lab or its PCs. This update requires the laboratories and computers tables from the monitoring schema; the legacy database/techpulse.sql export contains only users.
