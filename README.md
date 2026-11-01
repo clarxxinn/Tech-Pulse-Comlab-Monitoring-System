@@ -1,163 +1,268 @@
-Tech Pulse – Computer Laboratory Monitoring System
+# Tech Pulse — Computer Laboratory Monitoring System
+
+Tech Pulse is a PHP and MariaDB application for managing computer laboratory usage, student accounts, and Time In / Time Out records. It includes separate student and administrator dashboards, responsive layouts, and light and dark themes.
+
+The current installation supports **4 laboratories, 45 PCs per laboratory, and 180 PCs in total**. Laboratory choices and computer counts are loaded from the database.
+
+## Features
+
+### Students
+
+- Register and log in using a Student ID.
+- View account information and recent computer usage history.
+- Choose ComLab 1, 2, 3, or 4 and view available, occupied, and maintenance PCs.
+- Select an available PC to Time In and end the session with Time Out.
+- Use the system on phone, tablet, and desktop screen sizes.
+
+### Administrators
+
+- View computer availability statistics and active sessions.
+- Create, view, update, and delete student accounts.
+- Browse student accounts in pages of 25 records.
+- Mark unoccupied computers as under maintenance or available.
+- End abandoned sessions using the administrator Time Out action.
+- Review recent usage history, including anonymous records for deleted accounts.
+
+### Validation and security
+
+- MySQLi prepared statements for user-supplied query values.
+- Password hashing and verification.
+- Server-side account validation and database integrity constraints.
+- CSRF protection, session ID regeneration after login, and administrator access checks.
+- Escaped HTML output and HttpOnly / SameSite session cookies.
+- Private local configuration and a database account restricted to CRUD permissions.
+- Apache rules blocking direct access to configuration, SQL exports, Git metadata, and test files.
 
-A modern, web-based computer laboratory monitoring system built with PHP, MySQL, HTML, CSS, and JavaScript. Designed to streamline laboratory management, it features student Time In/Time Out tracking, computer availability monitoring, account management, and responsive dashboards with light and dark themes.
+Availability updates when a dashboard is loaded or refreshed; the application does not continuously poll for changes.
 
-📖 About the Project
+## Technology
 
-Tech Pulse is a web-based system designed to simplify computer laboratory monitoring and student computer usage management. It replaces manual usage records with a database-driven system that tracks computer availability, active sessions, and student activity.
+| Component | Technology |
+|---|---|
+| Backend | PHP with MySQLi |
+| Database | MariaDB / InnoDB |
+| Frontend | HTML, CSS, and vanilla JavaScript |
+| Local server | Apache through XAMPP |
+| Database administration | phpMyAdmin |
+| Version control | Git and GitHub |
 
-The system manages 4 computer laboratories with 45 PCs each (180 computers total) and provides separate dashboards for students and administrators.
+The project has been tested with **PHP 8.2** and **MariaDB 10.4** on Windows/XAMPP. PHP requires the `mysqli` and `mbstring` extensions. No Composer packages, npm dependencies, or build step are required.
 
-🖥️ Computer monitoring displays available, occupied, and maintenance computers across all laboratories.
+## Project structure
 
-⏱️ Session tracking records student Time In and Time Out, including computer assignments and usage history.
+```text
+Tech Pulse - Comlab Monitoring System/
+├── admindashboard/         # Admin dashboard, account CRUD, and styles
+├── assets/
+│   ├── css/               # Shared styles and responsive layout rules
+│   ├── img/               # Images and theme icons
+│   └── js/                # Shared interface scripts
+├── auth/
+│   ├── login/
+│   ├── logout/
+│   └── register/
+├── config/
+│   ├── local.example.php  # Configuration template
+│   ├── local.php          # Private local credentials; Git-ignored
+│   ├── monitoring.php     # Computer and session operations
+│   ├── options.php        # Course/year choices from reference tables
+│   ├── session.php        # Session initialization
+│   ├── techpulse.php      # Database connection and application settings
+│   └── validation.php     # Shared account validation
+├── dashboard/             # Student dashboard and profile queries
+├── database/
+│   ├── README.md          # Schema, constraints, backup, and test notes
+│   ├── techpulse.sql      # Complete fresh-install schema and synthetic data
+│   ├── add_comlab4.sql    # ComLab 4 update for older monitoring databases
+│   └── upgrade_rubric.sql # One-time database integrity/reference-table upgrade
+├── tests/
+│   ├── database.php       # Isolated database/helper regression checks
+│   └── http.ps1           # Isolated HTTP workflow checks
+├── .gitignore
+├── .htaccess
+├── AGENTS.md
+├── index.php              # Public landing page
+└── README.md
+```
 
-🛡️ Administrator controls provide account management, maintenance management, and laboratory activity monitoring.
+## Local installation
 
-✨ Features
+### 1. Clone the project
 
-Student Dashboard
+In PowerShell:
 
-🏫 Laboratory selection: switch between ComLab 1, 2, 3, and 4, each containing 45 computers.
+```powershell
+Set-Location C:\xampp\htdocs
+git clone https://github.com/clarxxinn/Tech-Pulse-Comlab-Monitoring-System.git "Tech Pulse - Comlab Monitoring System"
+Set-Location "C:\xampp\htdocs\Tech Pulse - Comlab Monitoring System"
+```
 
-🖥️ Computer availability: view available, occupied, and maintenance PCs through color-coded indicators.
+If the project is already present, use the existing folder.
 
-⏱️ Time In / Time Out: start and end computer usage sessions.
+### 2. Start XAMPP
 
-📜 Session history: view previous computer usage records.
+Start **Apache** and **MySQL** in the XAMPP Control Panel. Open [phpMyAdmin](http://localhost/phpmyadmin/).
 
-👤 Account management: registration, login, profile, and logout.
+### 3. Import the database
 
-Administrator Dashboard
+Create an empty database named `techpulse` with the `utf8mb4_general_ci` collation. Select that database, open **Import**, and import [database/techpulse.sql](database/techpulse.sql).
 
-📊 Monitoring statistics: view total, available, occupied, and maintenance computer counts.
+The fresh-install export includes all six table structures, course/year options, four laboratories, 180 available PCs, and one synthetic student account. It does not contain the working installation's personal student records.
 
-🖥️ Laboratory monitoring: monitor all 180 computers across four laboratories.
+### 4. Create an application database user
 
-🛠️ Maintenance controls: mark computers as under maintenance or restore their availability.
+For a new installation, run the following in phpMyAdmin as a database administrator, replacing the password placeholder:
 
-👥 Student management: create, edit, and delete student accounts.
+```sql
+CREATE USER 'techpulse_app'@'localhost'
+    IDENTIFIED BY 'REPLACE_WITH_YOUR_DATABASE_PASSWORD';
 
-📋 Session records: view active sessions, student information, and recent usage history.
+GRANT SELECT, INSERT, UPDATE, DELETE
+    ON techpulse.* TO 'techpulse_app'@'localhost';
+```
 
-Interface & Security
+If this account already exists, use its configured credentials. Schema imports and upgrades require a separate database account with the necessary schema-management permissions.
 
-🌗 Light / Dark theme: switch between light and dark interfaces.
+### 5. Configure local credentials
 
-📱 Responsive design: adaptable layouts for desktop and mobile browsers.
+```powershell
+Copy-Item config/local.example.php config/local.php
+```
 
-🔐 Authentication: session-based login with administrator access restrictions.
+Edit `config/local.php` and set the database credentials, administrator username, and administrator password hash. Generate the hash using your chosen password:
 
-🛡️ Data protection: password hashing, input validation, and protected database operations.
+```powershell
+& C:\xampp\php\php.exe -r "echo password_hash('REPLACE_WITH_YOUR_ADMIN_PASSWORD', PASSWORD_DEFAULT), PHP_EOL;"
+```
 
-🛠️ Tech Stack
+Paste the resulting hash into `ADMIN_PASSWORD_HASH` in `config/local.php`. The database password must match the account created in the previous step. Keep local credentials out of Git; `config/local.php` is already ignored.
 
-Category
+The application also accepts the corresponding environment variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD_HASH`. Environment variables take precedence over local configuration.
 
-Technology
+### 6. Open the system
 
-💻 Backend
+[Open Tech Pulse locally](http://localhost/Tech%20Pulse%20-%20Comlab%20Monitoring%20System/).
 
-PHP
+The URL above matches the folder name used in the clone command. If you choose another folder name, adjust the URL accordingly. After interface updates, use **Ctrl+F5** to refresh cached styles and scripts.
 
-🎨 Frontend
+## Demo account
 
-HTML5, CSS3, JavaScript
+The following student exists **only after importing the fresh-install SQL**:
 
-🗄️ Database
+| Field | Value |
+|---|---|
+| Student ID | `2000000100` |
+| Password | `DemoStudent!2026` |
 
-MySQL
+Administrator credentials are configured separately in `config/local.php`; the repository does not provide a default working administrator password.
 
-🔌 Database Access
+## Database design
 
-MySQLi
+| Table | Purpose |
+|---|---|
+| `courses` | Canonical course codes and names |
+| `year_levels` | Valid year-level choices and display order |
+| `users` | Student accounts, profiles, and password hashes |
+| `laboratories` | Laboratory identifiers and names |
+| `computers` | Laboratory assignments, PC numbers, and maintenance status |
+| `computer_sessions` | Time In / Time Out records and computer assignments |
 
-🖥️ Local Server
+Foreign keys connect students to course/year choices, computers to laboratories, and sessions to students and computers. Occupied status is derived from active sessions.
 
-Apache, XAMPP
+Unique generated-column indexes enforce one active session per student and per computer. Other indexes support student history, recent sessions, and account pagination. Database checks reject invalid IDs, blank names, invalid PC numbers, and inconsistent session times.
 
-🛢️ Database Tool
+Students with an active session must Time Out before their accounts can be deleted. Deleting an account anonymizes its completed session records and retains them for laboratory usage history.
 
-phpMyAdmin
+See [database/README.md](database/README.md) for the schema explanation and implementation details.
 
-🔧 Version Control
+## Existing installations
 
-Git, GitHub
+Back up the existing database before applying migrations.
 
-🏗️ How It Works (Architecture)
+| File | When to use it |
+|---|---|
+| `database/techpulse.sql` | A fresh installation into an empty database |
+| `database/add_comlab4.sql` | An older monitoring database that needs ComLab 4 and its 45 PCs; safe to rerun |
+| `database/upgrade_rubric.sql` | An existing pre-upgrade monitoring database; run **once** |
 
-Tech-Pulse-Comlab-Monitoring-System/
-├── admindashboard/     # Admin monitoring and account management
-├── assets/             # Shared assets
-├── auth/               # Login and registration
-├── config/             # Database connection and monitoring logic
-├── dashboard/          # Student dashboard and computer sessions
-├── database/           # MySQL database export
-├── index.php           # Application entry point
-└── tests/              # Isolated database and HTTP regression checks
+The integrity upgrade adds reference tables, validation constraints, and indexes, and standardizes abbreviated year values. Do not rerun it on an already upgraded database. Do not import the fresh-install SQL over an existing working database.
 
-The system uses three main components:
+## Backup and restore
 
-🧠 Student Module — handles authentication, laboratory selection, computer assignments, Time In/Time Out, and session history.
+Create a complete export of the working database using phpMyAdmin **Export**, or use PowerShell with an existing destination folder outside `htdocs`:
 
-🛡️ Administrator Module — manages student accounts, monitors computer statuses, and controls maintenance availability.
+```powershell
+& C:\xampp\mysql\bin\mysqldump.exe --user=root --password --single-transaction --routines --triggers --hex-blob --result-file="C:\path\outside-htdocs\techpulse-full-backup.sql" techpulse
+```
 
-🗄️ Database Module — stores user information, laboratory records, computer statuses, and session history using MySQL.
+Use the database administration account appropriate to your installation. A full backup includes current records; the repository's fresh-install SQL contains synthetic data instead.
 
-Computer availability is retrieved from the database when the dashboard loads or refreshes.
+To verify a backup, create a separate empty database and import the SQL into it. Compare all six tables, record counts, relationships, and indexes. Keep the working database separate from restore tests.
 
-🚀 Installation
+## Testing
 
-To run Tech Pulse locally, follow these steps:
+### PHP syntax checks
 
-Clone the repository:
+From the project root:
 
-git clone https://github.com/clarxxinn/Tech-Pulse-Comlab-Monitoring-System.git
+```powershell
+Get-ChildItem -Recurse -Filter *.php | ForEach-Object {
+    & C:\xampp\php\php.exe -l $_.FullName
+}
+```
 
-Move the project folder into C:\xampp\htdocs\.
+### Isolated database checks
 
-Start Apache and MySQL using the XAMPP Control Panel.
+Create a disposable database named `techpulse_rubric_verify` and import `database/techpulse.sql` into it. In a dedicated PowerShell terminal, configure verification credentials and run:
 
-Open phpMyAdmin, create a database named techpulse, and import database/techpulse.sql.
+```powershell
+$env:DB_NAME = 'techpulse_rubric_verify'
+$env:DB_USER = 'YOUR_VERIFICATION_DATABASE_USER'
+$env:DB_PASSWORD = 'YOUR_VERIFICATION_DATABASE_PASSWORD'
+$env:ADMIN_PASSWORD_HASH = (& C:\xampp\php\php.exe -r "echo password_hash('RubricAdmin!2026', PASSWORD_DEFAULT);")
 
-Copy config/local.example.php to config/local.php and configure a dedicated database user and an administrator password hash. See database/README.md for grants, validation, backups, and verification.
+& C:\xampp\php\php.exe tests/database.php
+```
 
-Open the system in your browser:
+The database test refuses to run against another database name. It covers account CRUD, password handling, input validation, database constraints, session exclusivity, history preservation, and pagination, and removes its synthetic fixtures afterward.
 
-http://localhost/Tech%20Pulse%20-%20Comlab%20Monitoring%20System/
+### HTTP workflow checks
 
-📱 Usage
+In a dedicated terminal, set the same verification environment variables shown above. Also set `ADMIN_USERNAME` to `admin`. Start a loopback-only verification server with a writable session directory outside the project:
 
-Students can register or log in, select a computer laboratory, and view PC availability.
+```powershell
+$env:ADMIN_USERNAME = 'admin'
+$sessionPath = Join-Path $env:TEMP 'techpulse-verification-sessions'
+New-Item -ItemType Directory -Path $sessionPath -Force | Out-Null
 
-Select an available PC and click Time In to begin a session.
+& C:\xampp\php\php.exe -d "session.save_path=$sessionPath" -S 127.0.0.1:8097 -t .
+```
 
-Click Time Out when finished. The session is saved in the usage history.
+From another PowerShell terminal in the project root:
 
-Administrators can log in to access the monitoring dashboard.
+```powershell
+& ./tests/http.ps1
+```
 
-Select a laboratory to monitor its computers, manage maintenance status, and view active sessions.
+The HTTP suite targets only `127.0.0.1:8097`. Its test administrator password is `RubricAdmin!2026`, matching the verification-only hash generated above. Use these settings only for the disposable verification environment. Stop the server with **Ctrl+C** and close verification terminals when finished. Apache remains the normal application server; PHP's development server does not enforce `.htaccess` rules.
 
-Administrators can also create, edit, and delete student accounts.
+### Recorded verification
 
-🤝 How to Contribute
+- 74 database/helper checks passed.
+- 23 HTTP workflow checks passed.
+- Full working-database export restored successfully, with every restored row compared against the source.
+- Six pages checked at 44 viewport sizes in light and dark themes: 528 layout checks without horizontal page overflow.
 
-Contributions are welcome! To contribute:
+Responsive checks used browser viewports, including mobile and landscape sizes; physical-device/browser-engine testing remains a separate check.
 
-Fork the repository.
+## Contributing
 
-Create a new branch for your changes.
+1. Fork the repository and create a focused branch.
+2. Make the change and run the relevant checks.
+3. Open a pull request describing the behavior, database changes, and validation performed.
 
-Make your changes and commit them.
+Use synthetic fixtures for shared database exports. Do not commit private configuration or personal student records.
 
-Push your branch to your forked repository.
+## License
 
-Submit a pull request with a description of your changes.
-
-📄 License
-
-This project is developed for educational purposes. No open-source license has been specified.
-
-ComLab 4 database update
-
-For an existing monitoring database, run database/add_comlab4.sql in phpMyAdmin with techpulse selected. It adds ComLab 4 and PCs 1-45 without changing existing computers or usage history. Re-running it does not duplicate the lab or its PCs. The current database/techpulse.sql is a complete fresh-install schema with synthetic data. Existing installations use the one-time database/upgrade_rubric.sql migration; see database/README.md.
+This project is developed for educational purposes. No open-source license has been specified in this repository.
