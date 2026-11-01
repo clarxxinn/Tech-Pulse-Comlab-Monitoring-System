@@ -4,3 +4,8 @@ RewriteRule (^|/)\.git(?:/|$) - [F,L,NC]
 <FilesMatch "(?i)\.(sql|zip|bak|log|env)$">
     Require all denied
 </FilesMatch>
+
+# Database helpers are included by PHP pages, not opened directly in a browser.
+<FilesMatch "^(registerdb|logindb|dashboarddb|admindashboarddb)\.php$">
+    Require all denied
+</FilesMatch>
