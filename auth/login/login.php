@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+require_once __DIR__ . '/../../config/session.php';
 
 require_once __DIR__ . '/../../config/techpulse.php';
 require_once __DIR__ . '/logindb.php';
@@ -22,15 +22,15 @@ if (empty($_SESSION['csrf_token'])) {
 
 $errors = [];
 $studentId = '';
-$justRegistered = ($_GET['registered'] ?? '') === '1';
+$justRegistered = (inputString($_GET, 'registered')) === '1';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'] ?? '')) {
+    if (!hash_equals($_SESSION['csrf_token'], inputString($_POST, 'csrf_token'))) {
         $errors[] = 'Your session expired. Please refresh the page and try again.';
     }
 
-    $studentId = trim($_POST['studentid'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $studentId = trim(inputString($_POST, 'studentid'));
+    $password = inputString($_POST, 'password');
     $isAdmin = hash_equals(ADMIN_USERNAME, $studentId);
 
     if (empty($errors) && $isAdmin) {
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors) && !$isAdmin) {
-        if ($studentId === '' || !ctype_digit($studentId)) {
+        if (!validStudentId($studentId)) {
             $errors[] = 'Please enter a valid Student ID.';
         }
 
@@ -90,8 +90,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="../../assets/js/theme.js" defer></script>
     <script src="../../assets/js/password-toggle.js" defer></script>
     <script src="login_auth.js" defer></script>
+    <link rel="stylesheet" href="../../assets/css/responsive.css">
 </head>
-<body>
+<body class="page-auth">
     <button type="button" class="theme-toggle" aria-label="Toggle dark mode">
         <img src="../../assets/img/dark-mode.png" alt="Dark mode">
     </button>

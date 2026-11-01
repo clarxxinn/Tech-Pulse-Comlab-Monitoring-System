@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
-session_start();
+require_once __DIR__ . '/../../config/validation.php';
+require_once __DIR__ . '/../../config/session.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+if (!empty($_SESSION['csrf_token']) && $_SERVER['REQUEST_METHOD'] === 'POST'
+    && hash_equals($_SESSION['csrf_token'] ?? '', inputString($_POST, 'csrf_token'))) {
 
     $_SESSION = [];
 

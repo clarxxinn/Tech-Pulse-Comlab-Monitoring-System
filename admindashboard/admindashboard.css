@@ -687,6 +687,15 @@ button[type="submit"]:hover,
     margin-bottom: 16px;
 }
 
+.account-pagination {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    color: var(--textSecondary);
+}
+
 .admin-lab-options {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

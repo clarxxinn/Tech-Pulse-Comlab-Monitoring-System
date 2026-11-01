@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 require_once __DIR__ . '/../config/techpulse.php';
 require_once __DIR__ . '/dashboarddb.php';
@@ -34,7 +34,7 @@ if (
 ) {
     if (!hash_equals(
         $_SESSION['csrf_token'],
-        (string) ($_POST['csrf_token'] ?? '')
+        (string) (inputString($_POST, 'csrf_token'))
     )) {
         $monitoringError =
             'Invalid security token. Refresh and retry.';
@@ -68,7 +68,7 @@ if (
             exit;
 
         } catch (Throwable $e) {
-            $monitoringError = $e instanceof RuntimeException
+            $monitoringError = $e instanceof RuntimeException && !$e instanceof mysqli_sql_exception
                 ? $e->getMessage()
                 : 'Unable to update session. Please retry.';
         }
@@ -76,6 +76,7 @@ if (
 }
 
 $computers = monitoringComputers($conn);
+$laboratories = monitoringLaboratories($conn);
 
 $activeSession = monitoringActive(
     $conn,
@@ -123,9 +124,10 @@ $memberSince = date(
     <link rel="stylesheet" href="dashboard.css">
 
     <script src="../assets/js/theme.js" defer></script>
+    <link rel="stylesheet" href="../assets/css/responsive.css">
 </head>
 
-<body>
+<body class="page-student">
     <button
         type="button"
         class="theme-toggle"
@@ -205,7 +207,7 @@ $memberSince = date(
             <section class="monitor-section">
 
                 <h2>
-                    Computer Availability — 4 Labs / 180 PCs
+                    Computer Availability — <?= count($laboratories) ?> Labs / <?= count($computers) ?> PCs
                 </h2>
 
                 <?php if ($monitoringError): ?>
@@ -256,12 +258,12 @@ $memberSince = date(
                     <h3>Select Computer Laboratory</h3>
 
                     <p>
-                        Choose a ComLab to see its 45 computers.
+                        Choose a ComLab to see its computers.
                     </p>
 
                     <div class="lab-options">
 
-                        <?php for ($lab = 1; $lab <= 4; $lab++): ?>
+                        <?php foreach ($laboratories as $laboratory): $lab = (int) $laboratory['lab_id']; ?>
 
                             <button
                                 type="button"
@@ -278,15 +280,15 @@ $memberSince = date(
                                 </span>
 
                                 <strong>
-                                    ComLab <?= $lab ?>
+                                    <?= htmlspecialchars($laboratory['lab_name']) ?>
                                 </strong>
 
                                 <small>
-                                    45 Computers
+                                    <?= (int) $laboratory['pc_count'] ?> Computers
                                 </small>
                             </button>
 
-                        <?php endfor; ?>
+                        <?php endforeach; ?>
 
                     </div>
                 </div>
@@ -294,7 +296,7 @@ $memberSince = date(
                 <!-- Selected Laboratory -->
                 <div id="lab-display" hidden>
 
-                    <?php for ($lab = 1; $lab <= 4; $lab++): ?>
+                    <?php foreach ($laboratories as $laboratory): $lab = (int) $laboratory['lab_id']; ?>
 
                         <section
                             class="lab-panel"
@@ -305,11 +307,11 @@ $memberSince = date(
 
                             <div class="lab-panel-header">
                                 <h3>
-                                    ComLab <?= $lab ?>
+                                    <?= htmlspecialchars($laboratory['lab_name']) ?>
                                 </h3>
 
                                 <span>
-                                    45 Computers
+                                    <?= (int) $laboratory['pc_count'] ?> Computers
                                 </span>
                             </div>
 
@@ -395,7 +397,7 @@ $memberSince = date(
                             </div>
                         </section>
 
-                    <?php endfor; ?>
+                    <?php endforeach; ?>
 
                 </div>
 

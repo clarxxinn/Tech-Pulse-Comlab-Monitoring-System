@@ -1,14 +1,19 @@
 <?php
 declare(strict_types=1);
 
+function monitoringLaboratories(mysqli $db): array {
+    return $db->query('SELECT l.lab_id, l.lab_name, COUNT(c.computer_id) AS pc_count
+        FROM laboratories l LEFT JOIN computers c ON c.lab_id = l.lab_id
+        GROUP BY l.lab_id, l.lab_name ORDER BY l.lab_id')->fetch_all(MYSQLI_ASSOC);
+}
+
 function monitoringComputers(mysqli $db): array {
     return $db->query("
         SELECT c.computer_id, c.lab_id, c.pc_number,
                c.status, s.session_id, s.StudentID
         FROM computers c
         LEFT JOIN computer_sessions s
-            ON s.computer_id = c.computer_id
-            AND s.time_out IS NULL
+            ON s.active_computer = c.computer_id
         ORDER BY c.lab_id, c.pc_number
     ")->fetch_all(MYSQLI_ASSOC);
 }
@@ -19,8 +24,7 @@ function monitoringActive(mysqli $db, int $student): ?array {
                c.pc_number, c.lab_id
         FROM computer_sessions s
         JOIN computers c ON c.computer_id = s.computer_id
-        WHERE s.StudentID = ?
-          AND s.time_out IS NULL
+        WHERE s.active_student = ?
     ");
     $q->bind_param('i', $student);
     $q->execute();
@@ -36,7 +40,7 @@ function monitoringHistory(mysqli $db, int $student): array {
         FROM computer_sessions s
         JOIN computers c ON c.computer_id = s.computer_id
         WHERE s.StudentID = ?
-        ORDER BY s.time_in DESC
+        ORDER BY s.time_in DESC, s.session_id DESC
         LIMIT 15
     ");
     $q->bind_param('i', $student);
@@ -100,8 +104,7 @@ function monitoringTimeOut(mysqli $db, int $student): void {
     $q = $db->prepare("
         UPDATE computer_sessions
         SET time_out = NOW()
-        WHERE StudentID = ?
-          AND time_out IS NULL
+        WHERE active_student = ?
     ");
     $q->bind_param('i', $student);
     $q->execute();
@@ -110,5 +113,17 @@ function monitoringTimeOut(mysqli $db, int $student): void {
 
     if (!$changed) {
         throw new RuntimeException('No active session found.');
+    }
+}
+
+/** Shared by the administrator's recovery action; an ended session cannot be reopened. */
+function monitoringAdminTimeOut(mysqli $db, int $sessionId): void {
+    $q = $db->prepare('UPDATE computer_sessions SET time_out = NOW() WHERE session_id = ? AND time_out IS NULL');
+    $q->bind_param('i', $sessionId);
+    $q->execute();
+    $changed = $q->affected_rows;
+    $q->close();
+    if (!$changed) {
+        throw new RuntimeException('This session has already ended or no longer exists.');
     }
 }

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 require_once __DIR__ . '/../config/techpulse.php';
 require_once __DIR__ . '/../config/options.php';
@@ -17,9 +17,9 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-$studentId = trim($_GET['id'] ?? $_POST['studentid'] ?? '');
+$studentId = trim(inputString($_GET, 'id') ?: inputString($_POST, 'studentid'));
 
-if ($studentId === '' || !ctype_digit($studentId)) {
+if (!validStudentId($studentId)) {
     $_SESSION['admin_flash'] = ['type' => 'error', 'message' => 'Invalid account.'];
     header('Location: admindashboard.php');
     exit;
@@ -42,15 +42,15 @@ $formValues = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'] ?? '')) {
+    if (!hash_equals($_SESSION['csrf_token'], inputString($_POST, 'csrf_token'))) {
         $errors[] = 'Your session expired. Please refresh the page and try again.';
     }
 
-    $firstName = trim($_POST['firstname'] ?? '');
-    $lastName = trim($_POST['lastname'] ?? '');
-    $course = trim($_POST['course'] ?? '');
-    $yearLevel = trim($_POST['yearlevel'] ?? '');
-    $newPassword = $_POST['new_password'] ?? '';
+    $firstName = trim(inputString($_POST, 'firstname'));
+    $lastName = trim(inputString($_POST, 'lastname'));
+    $course = trim(inputString($_POST, 'course'));
+    $yearLevel = trim(inputString($_POST, 'yearlevel'));
+    $newPassword = inputString($_POST, 'new_password');
 
     $formValues = [
         'firstname' => $firstName,
@@ -119,8 +119,9 @@ $csrfToken = $_SESSION['csrf_token'];
     <script src="../assets/js/theme.js" defer></script>
     <script src="../assets/js/password-toggle.js" defer></script>
     <script src="admin.js" defer></script>
+    <link rel="stylesheet" href="../assets/css/responsive.css">
 </head>
-<body>
+<body class="page-auth page-edit">
     <button type="button" class="theme-toggle" aria-label="Toggle dark mode">
         <img src="../assets/img/dark-mode.png" alt="Dark mode">
     </button>

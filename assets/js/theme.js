@@ -1,6 +1,8 @@
+const themeIconPath = new URL('../img/', document.currentScript.src).href;
+
 function applyTheme(theme) {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    const iconPath = '/Tech%20Pulse%20-%20Comlab%20Monitoring%20System/assets/img/';
+    const iconPath = themeIconPath;
 
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);

@@ -13,8 +13,9 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/theme.js" defer></script>
     <script src="assets/js/script.js" defer></script>
+    <link rel="stylesheet" href="assets/css/responsive.css">
 </head>
-<body>
+<body class="page-public">
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo">

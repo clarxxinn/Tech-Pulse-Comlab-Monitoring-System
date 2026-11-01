@@ -1,0 +1,6 @@
+Options -Indexes
+RewriteEngine On
+RewriteRule (^|/)\.git(?:/|$) - [F,L,NC]
+<FilesMatch "(?i)\.(sql|zip|bak|log|env)$">
+    Require all denied
+</FilesMatch>

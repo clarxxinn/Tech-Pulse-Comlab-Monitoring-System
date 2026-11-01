@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+require_once __DIR__ . '/../../config/session.php';
 
 require_once __DIR__ . '/../../config/techpulse.php';
 require_once __DIR__ . '/registerdb.php';
@@ -26,17 +26,17 @@ $formValues = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'] ?? '')) {
+    if (!hash_equals($_SESSION['csrf_token'], inputString($_POST, 'csrf_token'))) {
         $errors[] = 'Your session expired. Please refresh the page and try again.';
     }
 
-    $firstName = trim($_POST['firstname'] ?? '');
-    $lastName = trim($_POST['lastname'] ?? '');
-    $studentId = trim($_POST['studentid'] ?? '');
-    $course = trim($_POST['course'] ?? '');
-    $yearLevel = trim($_POST['yearlevel'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
+    $firstName = trim(inputString($_POST, 'firstname'));
+    $lastName = trim(inputString($_POST, 'lastname'));
+    $studentId = trim(inputString($_POST, 'studentid'));
+    $course = trim(inputString($_POST, 'course'));
+    $yearLevel = trim(inputString($_POST, 'yearlevel'));
+    $password = inputString($_POST, 'password');
+    $confirmPassword = inputString($_POST, 'confirm_password');
 
     $formValues = [
         'firstname' => $firstName,
@@ -54,8 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please enter a valid last name.';
     }
 
-    if ($studentId === '' || !ctype_digit($studentId)) {
-        $errors[] = 'Please enter a valid Student ID (numbers only).';
+    if (!validStudentId($studentId)) {
+        $errors[] = 'Student ID must be 1 to 2147483647, without leading zeros.';
     }
 
     if (!array_key_exists($course, $allowedCourses)) {
@@ -104,8 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="../../assets/js/theme.js" defer></script>
     <script src="../../assets/js/password-toggle.js" defer></script>
     <script src="register_auth.js" defer></script>
+    <link rel="stylesheet" href="../../assets/css/responsive.css">
 </head>
-<body>
+<body class="page-auth">
     <button type="button" class="theme-toggle" aria-label="Toggle dark mode">
         <img src="../../assets/img/dark-mode.png" alt="Dark mode">
     </button>
@@ -150,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="form-group">
                     <label for="studentid">Student ID</label>
-                    <input type="number" id="studentid" name="studentid" inputmode="numeric"
+                    <input type="text" id="studentid" name="studentid" inputmode="numeric"
                         placeholder="25010992"
                         value="<?= htmlspecialchars($formValues['studentid']) ?>" required>
                 </div>

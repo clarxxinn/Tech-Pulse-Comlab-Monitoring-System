@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 require_once __DIR__ . '/../config/techpulse.php';
 require_once __DIR__ . '/../config/options.php';
@@ -30,8 +30,8 @@ $formValues = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = (string) ($_POST['action'] ?? '');
-    $token = (string) ($_POST['csrf_token'] ?? '');
+    $action = inputString($_POST, 'action');
+    $token = inputString($_POST, 'csrf_token');
 
     $validCsrfToken = hash_equals(
         $_SESSION['csrf_token'],
@@ -43,6 +43,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'Your session expired. Please refresh the page and try again.';
     }
 
+    if ($validCsrfToken && $action === 'end_session') {
+        $sessionId = filter_var(inputString($_POST, 'session_id'), FILTER_VALIDATE_INT);
+        try {
+            if (!$sessionId || $sessionId < 1) {
+                throw new RuntimeException('Invalid session.');
+            }
+            monitoringAdminTimeOut($conn, $sessionId);
+            $_SESSION['admin_flash'] = ['type' => 'success', 'message' => 'Session ended. The computer is available again.'];
+        } catch (mysqli_sql_exception $e) {
+            error_log('Tech Pulse end session failed: ' . $e->getMessage());
+            $_SESSION['admin_flash'] = ['type' => 'error', 'message' => 'Unable to end the session. Please retry.'];
+        } catch (RuntimeException $e) {
+            $_SESSION['admin_flash'] = ['type' => 'error', 'message' => $e->getMessage()];
+        }
+        header('Location: admindashboard.php');
+        exit;
+    }
+
     // Update Computer Status
     if ($validCsrfToken && $action === 'computer_status') {
         $pcId = filter_var(
@@ -50,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             FILTER_VALIDATE_INT
         );
 
-        $newStatus = (string) ($_POST['status'] ?? '');
+        $newStatus = (string) (inputString($_POST, 'status'));
 
         if (
             !$pcId ||
@@ -86,8 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $conn->prepare(
                     'SELECT session_id
                      FROM computer_sessions
-                     WHERE computer_id = ?
-                       AND time_out IS NULL
+                     WHERE active_computer = ?
                      LIMIT 1'
                 );
                 $stmt->bind_param('i', $pcId);
@@ -129,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->rollback();
 
                 $monitoringError =
-                    $e instanceof RuntimeException
+                    $e instanceof RuntimeException && !$e instanceof mysqli_sql_exception
                     ? $e->getMessage()
                     : 'Unable to update computer status.';
             }
@@ -139,16 +156,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Delete Student Account
     if ($validCsrfToken && $action === 'delete') {
         $studentId = trim(
-            (string) ($_POST['studentid'] ?? '')
+            (string) (inputString($_POST, 'studentid'))
         );
 
         if (
-            $studentId !== '' &&
-            ctype_digit($studentId)
+            validStudentId($studentId)
         ) {
             $deleted = deleteUser($conn, $studentId);
 
-            $_SESSION['admin_flash'] = $deleted
+            $_SESSION['admin_flash'] = $deleted['success']
                 ? [
                     'type' => 'success',
                     'message' =>
@@ -157,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 : [
                     'type' => 'error',
                     'message' =>
-                        "Account {$studentId} could not be deleted."
+                        $deleted['error']
                 ];
         } else {
             $_SESSION['admin_flash'] = [
@@ -174,26 +190,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Create Student Account
     if ($validCsrfToken && $action === 'create') {
         $firstName = trim(
-            (string) ($_POST['firstname'] ?? '')
+            (string) (inputString($_POST, 'firstname'))
         );
 
         $lastName = trim(
-            (string) ($_POST['lastname'] ?? '')
+            (string) (inputString($_POST, 'lastname'))
         );
 
         $studentId = trim(
-            (string) ($_POST['studentid'] ?? '')
+            (string) (inputString($_POST, 'studentid'))
         );
 
         $course = trim(
-            (string) ($_POST['course'] ?? '')
+            (string) (inputString($_POST, 'course'))
         );
 
         $yearLevel = trim(
-            (string) ($_POST['yearlevel'] ?? '')
+            (string) (inputString($_POST, 'yearlevel'))
         );
 
-        $password = (string) ($_POST['password'] ?? '');
+        $password = (string) (inputString($_POST, 'password'));
 
         $formValues = [
             'firstname' => $firstName,
@@ -220,11 +236,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (
-            $studentId === '' ||
-            !ctype_digit($studentId)
+            !validStudentId($studentId)
         ) {
             $errors[] =
-                'Please enter a valid Student ID (numbers only).';
+                'Student ID must be 1 to 2147483647, without leading zeros.';
         }
 
         if (!array_key_exists($course, $allowedCourses)) {
@@ -277,14 +292,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $flash = $_SESSION['admin_flash'] ?? null;
 unset($_SESSION['admin_flash']);
 
-// Existing Account Management Data
-$users = getAllUsers($conn);
-$totalUsers = count($users);
+// Fetch only the requested account page; totals cover the whole database.
+$summary = getUserSummary($conn);
+$totalUsers = (int) $summary['total'];
+$totalPages = max(1, (int) ceil($totalUsers / 25));
+$page = filter_var(inputString($_GET, 'page'), FILTER_VALIDATE_INT) ?: 1;
+$page = max(1, min($page, $totalPages));
+$users = getAllUsers($conn, $page);
 
 $latestSignup = $totalUsers > 0
     ? date(
         'M j, Y',
-        strtotime($users[0]['created_at'])
+        strtotime($summary['latest'])
     )
     : '—';
 
@@ -292,22 +311,23 @@ $csrfToken = $_SESSION['csrf_token'];
 
 // Computer Monitoring Data
 $adminComputers = monitoringComputers($conn);
+$laboratories = monitoringLaboratories($conn);
 
 $activeSessions = $conn->query(
     "SELECT
         s.session_id,
         s.time_in,
         u.StudentID,
-        u.firstname,
-        u.lastname,
+        COALESCE(u.firstname, 'Deleted') AS firstname,
+        COALESCE(u.lastname, 'account') AS lastname,
         c.lab_id,
         c.pc_number
      FROM computer_sessions s
-     JOIN users u
+     LEFT JOIN users u
          ON u.StudentID = s.StudentID
      JOIN computers c
          ON c.computer_id = s.computer_id
-     WHERE s.time_out IS NULL
+     WHERE s.active_student IS NOT NULL
      ORDER BY s.time_in DESC"
 )->fetch_all(MYSQLI_ASSOC);
 
@@ -317,16 +337,16 @@ $sessionHistory = $conn->query(
         s.time_in,
         s.time_out,
         u.StudentID,
-        u.firstname,
-        u.lastname,
+        COALESCE(u.firstname, 'Deleted') AS firstname,
+        COALESCE(u.lastname, 'account') AS lastname,
         c.lab_id,
         c.pc_number
      FROM computer_sessions s
-     JOIN users u
+     LEFT JOIN users u
          ON u.StudentID = s.StudentID
      JOIN computers c
          ON c.computer_id = s.computer_id
-     ORDER BY s.time_in DESC
+     ORDER BY s.time_in DESC, s.session_id DESC
      LIMIT 30"
 )->fetch_all(MYSQLI_ASSOC);
 
@@ -406,9 +426,10 @@ foreach ($activeSessions as $session) {
         src="admin.js"
         defer
     ></script>
+    <link rel="stylesheet" href="../assets/css/responsive.css">
 </head>
 
-<body>
+<body class="page-admin">
 
     <!-- Theme Toggle -->
     <button
@@ -553,7 +574,7 @@ foreach ($activeSessions as $session) {
 
             <div class="admin-lab-options">
 
-                <?php for ($lab = 1; $lab <= 4; $lab++): ?>
+                <?php foreach ($laboratories as $laboratory): $lab = (int) $laboratory['lab_id']; ?>
 
                     <button
                         type="button"
@@ -567,20 +588,20 @@ foreach ($activeSessions as $session) {
                         </span>
 
                         <strong>
-                            ComLab <?= $lab ?>
+                            <?= htmlspecialchars($laboratory['lab_name']) ?>
                         </strong>
 
-                        <small>45 Computers</small>
+                        <small><?= (int) $laboratory['pc_count'] ?> Computers</small>
                     </button>
 
-                <?php endfor; ?>
+                <?php endforeach; ?>
 
             </div>
 
             <!-- Selected Laboratory -->
             <div id="admin-lab-display" hidden>
 
-                <?php for ($lab = 1; $lab <= 4; $lab++): ?>
+                <?php foreach ($laboratories as $laboratory): $lab = (int) $laboratory['lab_id']; ?>
 
                     <section
                         id="admin-lab-panel-<?= $lab ?>"
@@ -591,10 +612,10 @@ foreach ($activeSessions as $session) {
 
                         <div class="admin-lab-header">
                             <h3>
-                                ComLab <?= $lab ?>
+                                <?= htmlspecialchars($laboratory['lab_name']) ?>
                             </h3>
 
-                            <span>45 Computers</span>
+                            <span><?= (int) $laboratory['pc_count'] ?> Computers</span>
                         </div>
 
                         <div class="admin-pc-grid">
@@ -734,7 +755,7 @@ foreach ($activeSessions as $session) {
 
                     </section>
 
-                <?php endfor; ?>
+                <?php endforeach; ?>
 
             </div>
 
@@ -778,6 +799,7 @@ foreach ($activeSessions as $session) {
                             <th>ComLab</th>
                             <th>PC</th>
                             <th>Time In</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
 
@@ -787,7 +809,7 @@ foreach ($activeSessions as $session) {
 
                             <tr>
                                 <td
-                                    colspan="5"
+                                    colspan="6"
                                     class="empty-row"
                                 >
                                     No active sessions.
@@ -829,6 +851,14 @@ foreach ($activeSessions as $session) {
                                         <?= htmlspecialchars(
                                             $session['time_in']
                                         ) ?>
+                                    </td>
+                                    <td data-label="Action">
+                                        <form method="POST" action="admindashboard.php" data-confirm="End this computer session?">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                                            <input type="hidden" name="action" value="end_session">
+                                            <input type="hidden" name="session_id" value="<?= (int) $session['session_id'] ?>">
+                                            <button type="submit" class="btn-sm btn-edit">Time Out</button>
+                                        </form>
                                     </td>
                                 </tr>
 
@@ -1008,7 +1038,7 @@ foreach ($activeSessions as $session) {
                     </label>
 
                     <input
-                        type="number"
+                        type="text"
                         id="studentid"
                         name="studentid"
                         inputmode="numeric"
@@ -1149,6 +1179,16 @@ foreach ($activeSessions as $session) {
                 </span>
             </h2>
 
+            <nav class="account-pagination" aria-label="Account pages">
+                <?php if ($page > 1): ?>
+                    <a class="btn-sm btn-edit" href="?page=<?= $page - 1 ?>">Previous</a>
+                <?php endif; ?>
+                <span>Page <?= $page ?> of <?= $totalPages ?></span>
+                <?php if ($page < $totalPages): ?>
+                    <a class="btn-sm btn-edit" href="?page=<?= $page + 1 ?>">Next</a>
+                <?php endif; ?>
+            </nav>
+
             <div class="table-wrap">
 
                 <table class="data-table">
@@ -1240,7 +1280,7 @@ foreach ($activeSessions as $session) {
                                                 method="POST"
                                                 action="admindashboard.php"
                                                 class="inline-form"
-                                                data-confirm="Delete account <?= htmlspecialchars((string) $user['StudentID']) ?>? This cannot be undone."
+                                                data-confirm="Delete account <?= htmlspecialchars((string) $user['StudentID']) ?>? Completed usage history will be retained anonymously. This cannot be undone."
                                             >
 
                                                 <input

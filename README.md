@@ -94,7 +94,7 @@ Tech-Pulse-Comlab-Monitoring-System/
 ├── dashboard/          # Student dashboard and computer sessions
 ├── database/           # MySQL database export
 ├── index.php           # Application entry point
-└── reset_password.php  # Password reset functionality
+└── tests/              # Isolated database and HTTP regression checks
 
 The system uses three main components:
 
@@ -120,11 +120,11 @@ Start Apache and MySQL using the XAMPP Control Panel.
 
 Open phpMyAdmin, create a database named techpulse, and import database/techpulse.sql.
 
-Configure the database connection in config/techpulse.php.
+Copy config/local.example.php to config/local.php and configure a dedicated database user and an administrator password hash. See database/README.md for grants, validation, backups, and verification.
 
 Open the system in your browser:
 
-http://localhost/Tech-Pulse-Comlab-Monitoring-System/
+http://localhost/Tech%20Pulse%20-%20Comlab%20Monitoring%20System/
 
 📱 Usage
 
@@ -160,4 +160,4 @@ This project is developed for educational purposes. No open-source license has b
 
 ComLab 4 database update
 
-For an existing monitoring database, run database/add_comlab4.sql in phpMyAdmin with techpulse selected. It adds ComLab 4 and PCs 1-45 without changing existing computers or usage history. Re-running it does not duplicate the lab or its PCs. This update requires the laboratories and computers tables from the monitoring schema; the legacy database/techpulse.sql export contains only users.
+For an existing monitoring database, run database/add_comlab4.sql in phpMyAdmin with techpulse selected. It adds ComLab 4 and PCs 1-45 without changing existing computers or usage history. Re-running it does not duplicate the lab or its PCs. The current database/techpulse.sql is a complete fresh-install schema with synthetic data. Existing installations use the one-time database/upgrade_rubric.sql migration; see database/README.md.
